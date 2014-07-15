@@ -4,6 +4,8 @@
 #include <core/arch_x86/typedef.h>	// contain u8int,u16int....
 #include <core/arch_x86/multiboot.h>	// multiboot struct and typedef
 #include <core/arch_x86/regs.h>
-
+#include <core/arch_x86/common.h>
+#include <core/console.h>
+#include <core/arch_x86/cpu.h>
 
 #endif

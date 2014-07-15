@@ -20,7 +20,7 @@ ASM_OBJECTS = $(foreach x,$(basename $(ASM_SOURCES)),$(x).o)
 all: cleanall runiso
 
 MyOS.iso: kernel.bin
-	$(MK) -o MyOS.iso -b kernel.bin $(MKF) ./bin
+	$(MK) -o MyOS.iso -b isolinux/isolinux.bin $(MKF) ./bin
 	
 
 kernel.bin: $(C_OBJECTS) $(ASM_OBJECTS)
