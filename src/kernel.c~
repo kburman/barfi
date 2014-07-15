@@ -1,0 +1,9 @@
+#include <system.h>
+
+void kernel_start()
+{
+
+	// don't remove this
+	// never ever
+	for(;;);
+}
