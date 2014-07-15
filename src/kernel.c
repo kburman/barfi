@@ -5,6 +5,9 @@ u8int graphical_mode = 0;
 void kernel_start(multiboot_header_t *mbd,u32int initial_stack)
 {
 	gdt_install();
+	idt_install();
+	isrs_install();
+	
 	clrscr();
 	puts("Hello World");
 	int i;
@@ -12,6 +15,7 @@ void kernel_start(multiboot_header_t *mbd,u32int initial_stack)
 	
 	for(i=0;i<26;i++)
 	{
+		//i = i/i;
 		parseint(i,txt);
 		puts(txt);
 		putchar('\n');

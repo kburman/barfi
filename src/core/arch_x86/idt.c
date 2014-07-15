@@ -1,6 +1,6 @@
 #include <core/arch_x86/typedef.h>
 #include <core/arch_x86/common.h>
-#define N 3
+#define N 256
 struct idt_entry
 {
     unsigned short base_lo;
@@ -16,7 +16,7 @@ struct idt_ptr
     unsigned int base;
 } __attribute__((packed));
 
-struct idt_entry idt[256];
+struct idt_entry idt[N];
 struct idt_ptr idtp;
 
 extern void idt_load();
@@ -36,8 +36,8 @@ void idt_set_gate(unsigned char num, unsigned long base, unsigned short sel, uns
 
 void idt_install()
 {
-    idtp.limit = (sizeof (struct idt_entry) * 256) - 1;
+    idtp.limit = (sizeof (struct idt_entry) * N) - 1;
     idtp.base = &idt;
-    memset(&idt, 0, sizeof(struct idt_entry) * 256);
+    memset(&idt, 0, sizeof(struct idt_entry) * N);
     idt_load();
 }
