@@ -86,7 +86,6 @@ u8int *exception_messages[] =
     "Out of Bounds",
     "Invalid Opcode",
     "No Coprocessor",
-
     "Double Fault",
     "Coprocessor Segment Overrun",
     "Bad TSS",
@@ -95,7 +94,6 @@ u8int *exception_messages[] =
     "General Protection Fault",
     "Page Fault",
     "Unknown Interrupt",
-
     "Coprocessor Fault",
     "Alignment Check",
     "Machine Check",
@@ -119,6 +117,7 @@ void fault_handler(struct regs *r)
 {
     if (r->int_no < 32)
     {
+    	puts("\nSYSTEM LEVEL ERROR : Halted\n");
         puts(exception_messages[r->int_no]);
         puts(" Exception. System Halted!\n");
         for (;;);

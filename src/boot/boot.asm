@@ -40,3 +40,7 @@ start:
   cli
   call kernel_start
   jmp $
+
+[GLOBAL test]
+test:
+	int 0x20
