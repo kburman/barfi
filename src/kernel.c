@@ -4,6 +4,7 @@ u8int graphical_mode = 0;
 
 void kernel_start(multiboot_header_t *mbd,u32int initial_stack)
 {
+	gdt_install();
 	clrscr();
 	puts("Hello World");
 	int i;
