@@ -7,5 +7,6 @@
 #include <core/arch_x86/common.h>
 #include <core/console.h>
 #include <core/arch_x86/cpu.h>
+#include <core/string.h>
 
 #endif

@@ -40,7 +40,7 @@ void setxy(u8int new_x,u8int new_y)
 	update_cursor();
 }
 
-/*
+
 void clrscr()
 {
 	if(!graphical_mode)
@@ -49,26 +49,12 @@ void clrscr()
 		u16int lineno = 0;
 		while(lineno < 25*80)
 		{
-			*dest++ = attrib<<8| '.';
+			*dest++ = attrib<<8| ' ';
 			lineno++;
 		}
 	}
-
+	update_cursor();
 }
-*/
-
-void clrscr()
-{
-	int i = 0;
-	setxy(0,0);
-	while(i < 80*25)
-	{
-		putchar(' ');
-		i++;
-	}
-	setxy(0,0);
-}
-
 
 // scroll the screen one line above
 void scroll()
@@ -94,6 +80,7 @@ void scroll()
 		}
 		setxy(0,24);
 	}
+	update_cursor();
 }
 
 // put a char on the screen after the previous one
@@ -146,6 +133,7 @@ void puts(u8int *msg)
 {
 	while(*msg != '\0')
 		putchar(*msg++);
+	update_cursor();
 }
 
 
