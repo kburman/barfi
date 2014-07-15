@@ -9,4 +9,6 @@
 #include <core/arch_x86/cpu.h>
 #include <core/string.h>
 #include <core/arch_x86/gdt.h>
+#include <core/arch_x86/idt.h>
+
 #endif
