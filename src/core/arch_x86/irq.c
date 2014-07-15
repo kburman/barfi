@@ -54,7 +54,7 @@ void irq_remap(void)
 void irq_install()
 {
     irq_remap();
-
+	
     idt_set_gate(32, (unsigned)irq0, 0x08, 0x8E);
     idt_set_gate(33, (unsigned)irq1, 0x08, 0x8E);
     idt_set_gate(34, (unsigned)irq2, 0x08, 0x8E);
@@ -78,11 +78,7 @@ void irq_handler(struct regs *r)
 {
     /* This is a blank function pointer */
     void (*handler)(struct regs *r);
-    char txt[5] = "";
-    parseint(r->int_no,txt);
-	puts("\nIRQ Raised : ");
-	puts(txt);
-	putchar('\n');
+ 
     /* Find out if we have a custom handler to run for this
     *  IRQ, and then finally, run it */
     handler = irq_routines[r->int_no - 32];

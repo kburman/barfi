@@ -12,5 +12,6 @@
 #include <core/arch_x86/idt.h>
 #include <core/arch_x86/isr.h>
 #include <core/arch_x86/irq.h>
+#include <core/arch_x86/timer.h>
 
 #endif

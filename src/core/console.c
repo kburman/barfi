@@ -84,7 +84,7 @@ void scroll()
 }
 
 // put a char on the screen after the previous one
-void putchar(u8int ch)
+void putchar(s8int ch)
 {
 	if(!graphical_mode)
 	{
@@ -129,7 +129,7 @@ void putchar(u8int ch)
 }
 
 // Print a String 
-void puts(u8int *msg)
+void puts(s8int *msg)
 {
 	while(*msg != '\0')
 		putchar(*msg++);

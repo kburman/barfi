@@ -43,4 +43,4 @@ start:
 
 [GLOBAL test]
 test:
-	int 0x20
+	int 33

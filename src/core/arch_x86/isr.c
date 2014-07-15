@@ -117,9 +117,8 @@ void fault_handler(struct regs *r)
 {
     if (r->int_no < 32)
     {
-    	puts("\nSYSTEM LEVEL ERROR : Halted\n");
         puts(exception_messages[r->int_no]);
-        puts(" Exception. System Halted!\n");
+        puts("\n");
         for (;;);
     }
 }
