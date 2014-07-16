@@ -15,4 +15,5 @@
 #include <core/arch_x86/timer.h>
 #include <datetime.h>
 #include <keyboard.h>
+#include <kmalloc.h>
 #endif
