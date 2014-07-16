@@ -10,11 +10,12 @@ void kernel_start(multiboot_header_t *mbd,u32int initial_stack)
 	irq_install();
 	timer_install();
 	keyboard_install();
-	__asm__ __volatile__ ("sti"); 
 	
+	__asm__ __volatile__ ("sti"); 
+	initialise_paging();
 	clrscr();
-	char txt[10];
-	gets(txt);	
+	puts("Paging Enabled");
+	//u32int *ptr = (u32int*)0xa0000000;
 	
 
 	// don't remove this

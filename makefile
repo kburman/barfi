@@ -40,7 +40,7 @@ cleanobj:
 	rm -f $(C_OBJECTS) $(ASM_OBJECTS)
 
 runkernel: kernel.bin
-	qemu-system-i386 -kernel bin/kernel.bin
+	qemu-system-i386 -m 16 -kernel bin/kernel.bin
 	
 runiso: MyOS.iso
-	qemu-system-i386 --cdrom $<
+	qemu-system-i386 -m 16 --cdrom $<

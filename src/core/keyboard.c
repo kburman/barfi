@@ -1,5 +1,6 @@
 #include <core/arch_x86/typedef.h>
 #include <core/arch_x86/regs.h>
+#include <core/arch_x86/irq.h>
 #include <core/console.h>
 #include <keyboard.h>
 
