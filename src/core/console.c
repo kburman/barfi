@@ -128,13 +128,16 @@ void putchar(s8int ch)
 	update_cursor();
 }
 
+
+
+
 // Print a String 
 void puts(s8int *msg)
 {
+	
 	while(*msg != '\0')
 		putchar(*msg++);
 	update_cursor();
 }
-
 
 
