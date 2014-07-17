@@ -1,0 +1,8 @@
+megs: 20
+mouse: enabled=0
+ata1-master: type=cdrom, path=./MyOS.iso, status=inserted
+log: bochsout.txt
+boot: cdrom
+display_library: sdl  
+cpu: count=1, ips=10000000, reset_on_triple_fault=0             
+vgaromimage: file= $BXSHARE/VGABIOS-lgpl-latest

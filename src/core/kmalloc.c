@@ -2,7 +2,7 @@
 
 // end is defined in the linker script.
 extern u32int end;
-u32int placement_address = (u32int)&end;
+volatile u32int placement_address = (u32int)&end;
 
 u32int kmalloc_int(u32int sz, int align, u32int *phys)
 {
@@ -21,7 +21,7 @@ u32int kmalloc_int(u32int sz, int align, u32int *phys)
         *phys = placement_address;
     }
     u32int tmp = placement_address;
-    placement_address += sz;
+    placement_address = (placement_address +sz);
     return tmp;
 }
 

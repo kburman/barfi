@@ -14,7 +14,7 @@
 #define YEAR (365*DAY)
 
 // ticks every 0.01 sec by default
-unsigned long ticks = 0;
+volatile unsigned long ticks = 0;
 
 void timer_phase(int hz)
 {
@@ -42,7 +42,7 @@ void timer_wait(int xticks)
     unsigned long eticks;
     char name[2];
     eticks = ticks + xticks;
-    for(;eticks>ticks;parseint(2,name));
+    for(;eticks>ticks;);
 }
 
 //Gets CMOS actual time

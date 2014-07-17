@@ -1,6 +1,7 @@
 #	compiler params
+# use -g to genrate debug symbol
 CC = gcc
-CF = -Wall -O -fstrength-reduce -fomit-frame-pointer -fno-stack-protector -finline-functions -nostdinc -fno-builtin -m32 -I./src/include -c
+CF = -Wall -O  -fstrength-reduce -fomit-frame-pointer -fno-stack-protector -finline-functions -nostdinc -fno-builtin -m32  -I./src/include -c
 
 #linker params
 LNK = ld
@@ -19,7 +20,7 @@ ASM_OBJECTS = $(foreach x,$(basename $(ASM_SOURCES)),$(x).o)
 
 all: cleanall runiso
 
-MyOS.iso: kernel.bin
+MyOS.iso: kernel.bin 
 	$(MK) -o MyOS.iso -b isolinux/isolinux.bin $(MKF) ./bin
 	
 
@@ -43,4 +44,6 @@ runkernel: kernel.bin
 	qemu-system-i386 -m 16 -kernel bin/kernel.bin
 	
 runiso: MyOS.iso
-	qemu-system-i386 -m 16 --cdrom $<
+	# use -S -gdb tcp::1234 for debug it will wait for connection
+	qemu-system-i386 -m 16   --cdrom $<
+	#bochs -f ./bochs/bochsrc

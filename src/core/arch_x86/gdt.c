@@ -1,5 +1,5 @@
 #include <core/arch_x86/typedef.h>
-#define N 3
+#define N 5
 
 struct gdt_entry
 {
@@ -18,7 +18,7 @@ struct gdt_ptr
 } __attribute__((packed));
 
 struct gdt_entry gdt[N];
-struct gdt_ptr gp;
+struct gdt_ptr gp;	// also being used in gdt_asm.asm
 
 extern void gdt_flush();
 
@@ -41,10 +41,12 @@ void gdt_set_gate(int num, unsigned long base, unsigned long limit, unsigned cha
 void gdt_install()
 {
     gp.limit = (sizeof(struct gdt_entry) * N) - 1;
-    gp.base = &gdt;
-    gdt_set_gate(0, 0, 0, 0, 0);
-    gdt_set_gate(1, 0, 0xFFFFFFFF, 0x9A, 0xCF);
-    gdt_set_gate(2, 0, 0xFFFFFFFF, 0x92, 0xCF);
+    gp.base = (int*)&gdt;
+    gdt_set_gate(0, 0, 0, 0, 0);                // Null segment
+    gdt_set_gate(1, 0, 0xFFFFFFFF, 0x9A, 0xCF); // Code segment
+    gdt_set_gate(2, 0, 0xFFFFFFFF, 0x92, 0xCF); // Data segment
+    gdt_set_gate(3, 0, 0xFFFFFFFF, 0xFA, 0xCF); // User mode code segment
+    gdt_set_gate(4, 0, 0xFFFFFFFF, 0xF2, 0xCF); // User mode data segment
 
     gdt_flush();
 }
