@@ -31,6 +31,7 @@ void parseint(u16int no,u8int *dest)
 	*dest = '\0';
 }
 
+
 void strcat(u8int *dest,u8int *src)
 {
 	while(*dest++ != '\0');

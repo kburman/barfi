@@ -22,7 +22,7 @@ mboot:
   dd  MBOOT_HEADER_MAGIC
   dd  MBOOT_HEADER_FLAGS
   dd  MBOOT_CHECKSUM
-   
+
   dd  mboot
   dd  code
   dd  bss
@@ -44,3 +44,4 @@ start:
 [GLOBAL test]
 test:
 	int 33
+

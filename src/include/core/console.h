@@ -7,5 +7,6 @@ void clrscr();
 void scroll();
 void putchar(s8int ch);
 void puts(s8int *msg);
+void putint(int no);
 
 #endif

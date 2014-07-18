@@ -1,3 +1,7 @@
+/src/project.layout
+/src/project.cbp
+/frames.dump
 *.iso
 *.bin
 *.*~
+*.o

@@ -11,7 +11,7 @@ u8int attrib = 0x0F; // foreground & background
 u16int *txtmem = (u16int*)0xb8000;
 
 
-// Update the postion of the hardware cursor 
+// Update the postion of the hardware cursor
 void update_cursor()
 {
 	if(!graphical_mode)
@@ -23,7 +23,7 @@ void update_cursor()
   		  *  where the hardware cursor is to be 'blinking'. To
   		  *  learn more, you should look up some VGA specific
   		  *  programming documents. A great start to graphics:
- 	      *  http://www.brackeen.com/home/vga 
+ 	      *  http://www.brackeen.com/home/vga
  	      */
 		outb(0x3D4, 14);
   		outb(0x3D5, temp >> 8);
@@ -94,15 +94,15 @@ void putchar(s8int ch)
 			if(x+y > 0) // see if there is any ch to erase
 			{
 				txtmem[(y*80 + x)-1] = attrib<<8|0x20;
-				if(x==0) 
-				{	
+				if(x==0)
+				{
 					x = 25;
 					y--;
 				}
 				else
 				{
 					x--;
-				}	
+				}
 			}
 		}
 		else if(ch == '\t')
@@ -131,13 +131,20 @@ void putchar(s8int ch)
 
 
 
-// Print a String 
+// Print a String
 void puts(s8int *msg)
 {
-	
+
 	while(*msg != '\0')
 		putchar(*msg++);
 	update_cursor();
+}
+
+void putint(int no)
+{
+	char txt[10] = "";
+	itoa(txt,10,no);
+	puts(txt);
 }
 
 

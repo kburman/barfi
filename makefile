@@ -43,7 +43,9 @@ cleanobj:
 runkernel: kernel.bin
 	qemu-system-i386 -m 16 -kernel bin/kernel.bin
 	
+runmonitor:MyOS.iso
+	qemu-system-i386 -m 20 -monitor stdio   --cdrom $<
 runiso: MyOS.iso
 	# use -S -gdb tcp::1234 for debug it will wait for connection
-	qemu-system-i386 -m 16   --cdrom $<
+	qemu-system-i386 -m 20   --cdrom $<
 	#bochs -f ./bochs/bochsrc
