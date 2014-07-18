@@ -1,2 +1,3 @@
-MyOS.iso
-/bin/kernel.bin
+*.iso
+*.bin
+*.*~
