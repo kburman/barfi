@@ -32,6 +32,11 @@ void update_cursor()
 	}
 }
 
+void setcolor(u8int color)
+{
+	attrib = color;
+}
+
 // set the pointer
 void setxy(u8int new_x,u8int new_y)
 {

@@ -1,183 +1,208 @@
 #include <core/arch_x86/typedef.h>
 #include <core/arch_x86/common.h>
 #include <core/kmalloc.h>
-#define RAM_SIZE_KB 1024*16
-/*
-	How It Works
-	First it will find a end of kernel and just after
-	it it will allocate some space for maping space will
-	be calculated by dividing ram_size in kb by 8
-	why 8 because minimum amt of mem which can be allocated is 1kb
-	and we will represent this block by 1 bit not 1 byte
-	hence in place of one char (8 bit ) we can manage 8kb
-	some calculation according to this method if we have to map
-	4GB of ram then 4GB = 4194304KB
-	since 1kb be repesented by 1 bit
-	so ,4194304/8 =524288byte
-	   ,524288byte = 512KB
-	so we can map a ram of 4gb with only 512kb space
+#define debug_frames_func1
+#define debug_allocation
 
-	block size = 1kb ; ram =4gb ; map size = 512kb
-	block size = 1kb ; ram =2gb ; map size = 256kb
+typedef u32int physical_address;
+extern u32int end; // located in linker
+u8int *frames; // point to our frames
+u32int frame_count;
+u32int ram_sz;	// in bytes
 
-	block size = 2kb ; ram =4gb ; map size = 128kb
-	block size = 2kb ; ram =2gb ; map size = 64kb
-*/
-
-u32int getKernelSize_a();
-extern u32int end;
-u8int *frames;	// points to the frames 0,1
-u32int frames_count;	// in bytes
-
-u32int getRamSizeKB()
+void init_mm(u32int ram_sz_bytes)
 {
-	return (u32int)RAM_SIZE_KB;
+	ram_sz = ram_sz_bytes;
+	createFrames();
+	#ifdef debug_frames_func
+		testFrame();
+	#endif // debug
+	allocate_kernel();
+	#ifdef debug_allocation
+		testAllocation();
+	#endif // debug
 }
 
-// set the bit to one
-void setFrame(u32int address)
+void createFrames()
 {
-	u16int indx = address/8;
-	u8int off = address%8;
-	frames[indx] |= (0x1 << off);
+	frame_count = ram_sz / (4*1024);
+	frame_count /= 8;
+	frames = (u8int*)&end;
+	memset(frames,0,frame_count);
 }
 
-void setFrame(u32int address,u32int sz)
+void setFrame(physical_address address)
 {
-	while(sz != 0)
+	u32int indx = (u32int)address / (8*4*1024);
+	u32int off = (u32int)address % (8*4*1024);
+	off /= 4*1024;
+	#ifdef debug_frames_func
+		setcolor(0x02);
+		puts("\nfrom setframe phy:");putint(address);puts(" i:");putint(indx);puts(" o:");putint(off);putchar('\n');
+	#endif // debug
+    frames[indx] |= (0x1 << off);
+}
+
+void removeFrame(physical_address address)
+{
+	u32int indx = (u32int)address / (8*4*1024);
+	u32int off = (u32int)address % (8*4*1024);
+	off /= 4*1024;
+    frames[indx] &= ~(0x1 << off);
+}
+
+physical_address findFirst()
+{
+	u32int i,j;
+	for(i=0;i<frame_count;i++)
 	{
-		setFrame(address++);
-		sz--;
-	}
-}
-
-void removeFrame(u32int address)
-{
-	u16int indx = address/8;
-	u8int off = address%8;
-	frames[indx] &= ~(0x1 << off);
-}
-
-
-int getStatus(u32int address)
-{
-	u16int indx = address/8;
-	u8int off = address%8;
-	return (frames[indx] &(0x1 << off));
-}
-
-// if return zero then nothing is free
-// sz in KB
-u32int getFreeFrame(u32int sz)
-{
-	int i,j,z=0;
-	for(i=0;i<frames_count;i++)
-	{
-		if(frames[i] != (u8int)0xff) // some block is free
-		{
-			//puts("pass\n");
+        if(frames[i] != 0xff)
+        {
 			for(j=0;j<8;j++)
 			{
-				if((frames[i] & (0x1 << j)) == 0)
-					z++;
-				else
-					z = 0;
-				if(z == sz) return (8*i + j) - (sz-1);
+                if(!(frames[i] & (0x1 << j)))
+                {
+					#ifdef debug_frames_func
+						setcolor(0x30);
+						puts("\nfrom findf phy:");putint((physical_address)(i*8*4*1024 + j*4*1024));puts(" i:");putint(i);puts(" j:");putint(j);putchar('\n');
+					#endif // debug
+					return (physical_address)(i*8*4*1024 + j*4*1024);
+                }
 			}
-		}
+        }
 	}
-	return 0;
+	return 123;
 }
 
-void inti_mm()
+// this test should be run before alloting any thing to frames;
+//
+#ifdef debug_frames_func
+void testFrame()
 {
-	createFrameMap();
-	//allocate_kernel();
-	testAllocation();
-	if(getStatus(getKernelSize_a()-1) != 0)
-	{
-		puts("Working");
-	}
-	putint(getKernelSize_a());
-	printDebugInfo();
-}
+	//puts("\n--------- DEBUG kmalloc-> frames --------------\n");
+	puts("Test 1   : ");
+	physical_address add;
+	setFrame(1);
+	add = findFirst();
+	if(add == 0)
+		puts("Pass");
+	else
+		puts("Fail");
 
-u32int kmalloc(u32int sz)
-{
-	u32int add = getFreeFrame(sz);
-	if(add != 0)
-	{
-		setFrame(add,sz);
-	}
+	puts("\nTest 2   : ");
+	removeFrame(1);
+	setFrame(0);
+	add = findFirst();
+	if(add == 1)
+		puts("Pass");
+	else
+		puts("Fail");
+	removeFrame(0);
+	//puts("\n-------------------------------------------\n");
 }
+#endif
 
+
+#ifdef debug_allocation
+
+// run this after kernel allocation
 void testAllocation()
 {
-    setFrame(0);
-    setFrame(1);
+	setcolor(0x09);
+	puts("\n--------- DEBUG kmalloc-> frames ---------------------------\n");
+	physical_address add;
+	physical_address first;
 
-    setFrame(3);
-    setFrame(4);
-    setFrame(5);
-    setFrame(6);
+	add = findFirst();
+	first = add;
+	setFrame(add);
+	setcolor(0x0f);	puts("\naloc0 at : ");setcolor(0x03); putint(add);putchar('\n');
 
+	add = findFirst();
+	setFrame(add);
+	setcolor(0x0f);	puts("aloc1 at : ");setcolor(0x03); putint(add);putchar('\n');
 
+	add = findFirst();
+	setFrame(add);
+	setcolor(0x0f);	puts("aloc2 at : ");setcolor(0x03); putint(add);putchar('\n');
 
-    setFrame(10);
-    setFrame(11);
+	first = add;
+	add = findFirst();
+	setFrame(add);
+	setcolor(0x0f);	puts("aloc3 at : ");setcolor(0x03); putint(add);putchar('\n');
 
+	add = findFirst();
+	setFrame(add);
+	setcolor(0x0f);	puts("aloc4 at : ");setcolor(0x03); putint(add);putchar('\n');
 
-    u32int add = kmalloc(1);
-	add = kmalloc(1);
-    puts("\nRequest for 4kb gives us : ");
-    putint((u32int)add);
-    putchar('\n');
+	removeFrame(first);
+	setcolor(0x0f);	puts("dealoc2 at : ");setcolor(0x03); putint(first);putchar('\n');
+
+	// 4
+	add = findFirst();
+	setFrame(add);
+	setcolor(0x0f);	puts("aloc5 at : ");setcolor(0x03); putint(add);putchar('\n');
+
+	setcolor(0x09);
+	puts("\n------------------------------------------------------------\n");
 }
 
-// return the kernel size 1kb alinged
-// in kb
-u32int getKernelSize_a()
-{
-	u32int kernel_size = (u32int)&end;
-	kernel_size += frames_count;
-	if(kernel_size%1024 == 0) // means  1kb alinged
-	{
-		kernel_size /= 1024;
-	}
-	else
-	{
-		kernel_size /= 1024;
-		kernel_size++; // add one kb
-	}
-	return kernel_size;
-}
+#endif
 
 void allocate_kernel()
 {
-	u32int kernel_size = getKernelSize_a();
-	int iKB = 0;
-	for(iKB = 0;iKB < kernel_size;iKB++)
-	{
-		setFrame(iKB,1);
-	}
-}
+	// calc blocks needed
+	u32int block_count = 0;
+	physical_address add = &end;
+	add += frame_count;
 
-void createFrameMap()
-{
-	frames = &end;
-	frames_count = getRamSizeKB() / 8;
-	memset(frames,0,frames_count);
-}
+	block_count = add/(4*1024);
+	if((add%(4*1024)) != 0)
+		block_count++;
+    // for now we just fill the next 8block that is bad
+    // but it is just for now
+	if(block_count%8 != 0)
+		block_count += 8 - block_count%8;
 
 
-void printDebugInfo()
-{
-	puts("\n\n------DEBUG INFO : kmalloc----------\n\n");
-	puts("end : ");
-	putint((u32int)&end);
-	puts("\nno. of frames(8bit each) :");
-	putint(getRamSizeKB()/8);
-	puts("\nFirst free frame is at : ");
-	putint((int)getFreeFrame(1));
-	puts("\n\n---------------------------------------\n\n");
+    memset(frames,0xff,block_count/8);
+
+    #ifdef debug
+		puts("\n--------- DEBUG kmalloc-> frames --------------\n");
+		puts("Kernel total address : ");
+		putint(add);
+		puts("\n");
+
+		puts("Kernel allocated Block count : ");
+		putint(block_count);
+		puts("\n-----------------------------------------------\n");
+	#endif
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

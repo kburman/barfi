@@ -8,5 +8,5 @@ void scroll();
 void putchar(s8int ch);
 void puts(s8int *msg);
 void putint(int no);
-
+void setcolor(u8int color);
 #endif
