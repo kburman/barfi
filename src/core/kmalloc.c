@@ -42,12 +42,22 @@ void setFrame(u32int address)
 	frames[indx] |= (0x1 << off);
 }
 
+void setFrame(u32int address,u32int sz)
+{
+	while(sz != 0)
+	{
+		setFrame(address++);
+		sz--;
+	}
+}
+
 void removeFrame(u32int address)
 {
 	u16int indx = address/8;
 	u8int off = address%8;
 	frames[indx] &= ~(0x1 << off);
 }
+
 
 int getStatus(u32int address)
 {
@@ -82,15 +92,23 @@ u32int getFreeFrame(u32int sz)
 void inti_mm()
 {
 	createFrameMap();
-	allocate_kernel();
-	//testAllocation();
+	//allocate_kernel();
+	testAllocation();
 	if(getStatus(getKernelSize_a()-1) != 0)
 	{
 		puts("Working");
 	}
 	putint(getKernelSize_a());
-
 	printDebugInfo();
+}
+
+u32int kmalloc(u32int sz)
+{
+	u32int add = getFreeFrame(sz);
+	if(add != 0)
+	{
+		setFrame(add,sz);
+	}
 }
 
 void testAllocation()
@@ -107,7 +125,10 @@ void testAllocation()
 
     setFrame(10);
     setFrame(11);
-    u32int add = getFreeFrame(4);
+
+
+    u32int add = kmalloc(1);
+	add = kmalloc(1);
     puts("\nRequest for 4kb gives us : ");
     putint((u32int)add);
     putchar('\n');
@@ -137,7 +158,7 @@ void allocate_kernel()
 	int iKB = 0;
 	for(iKB = 0;iKB < kernel_size;iKB++)
 	{
-		setFrame(iKB);
+		setFrame(iKB,1);
 	}
 }
 
