@@ -7,9 +7,14 @@ extern u8int graphical_mode;
 
 
 u8int x = 0,y = 0; // x,y position in the screen
-u8int attrib = 0x0F; // foreground & background
+u8int attrib = 0x9f; // foreground & background
 u16int *txtmem = (u16int*)0xb8000;
 
+void getxy(u8int *x1,u8int *y1)
+{
+	*x1 = x;
+	*y1 = y;
+}
 
 // Update the postion of the hardware cursor
 void update_cursor()
@@ -17,16 +22,9 @@ void update_cursor()
 	if(!graphical_mode)
 	{
 		u8int temp = y*80 + x;
-		 /* This sends a command to indicies 14 and 15 in the
-   		  *  CRT Control Register of the VGA controller. These
-  		  *  are the high and low bytes of the index that show
-  		  *  where the hardware cursor is to be 'blinking'. To
-  		  *  learn more, you should look up some VGA specific
-  		  *  programming documents. A great start to graphics:
- 	      *  http://www.brackeen.com/home/vga
- 	      */
+		temp /= 2;
 		outb(0x3D4, 14);
-  		outb(0x3D5, temp >> 8);
+		outb(0x3D5, temp >> 8);
     	outb(0x3D4, 15);
     	outb(0x3D5, temp);
 	}
@@ -58,6 +56,7 @@ void clrscr()
 			lineno++;
 		}
 	}
+	setxy(0,0);
 	update_cursor();
 }
 
@@ -81,7 +80,7 @@ void scroll()
 		// clear last line
 		for(i=0;i<80;i++)
 		{
-			*dest = attrib<<8| ' ';
+			*dest++ = attrib<<8| ' ';
 		}
 		setxy(0,24);
 	}
@@ -137,7 +136,7 @@ void putchar(s8int ch)
 
 
 // Print a String
-void puts(s8int *msg)
+void puts(u8int *msg)
 {
 
 	while(*msg != '\0')
@@ -150,6 +149,7 @@ void putint(int no)
 	char txt[10] = "";
 	itoa(txt,10,no);
 	puts(txt);
+	update_cursor();
 }
 
 

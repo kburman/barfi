@@ -11,4 +11,6 @@ typedef          short s16int;
 typedef unsigned char  u8int;
 typedef          char  s8int;
 
+typedef u32int virtual_address;
+typedef u32int physical_address;
 #endif

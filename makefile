@@ -1,51 +1,55 @@
-#	compiler params
-# use -g to genrate debug symbol
-CC = gcc
-CF = -Wall -O  -fstrength-reduce -fomit-frame-pointer -fno-stack-protector -finline-functions -nostdinc -fno-builtin -m32  -I./src/include -c
+# DEBUG
+DEBUG = 
 
-#linker params
+# COMPILER 
+CC  = gcc
+CF  = -Wall -g -O  -fstrength-reduce -fomit-frame-pointer 
+CF += -fno-stack-protector -finline-functions -nostdinc 
+CF += -fno-builtin  -m32  -I./src/include -c
+
+# LINKER
 LNK = ld
-LNKF = -m elf_i386 -s 
+LNKF = -Map map.txt -m elf_i386 -s 
 
 #mkisofs
 MK = mkisofs
 MKF = -no-emul-boot -boot-load-size 4 -boot-info-table -N -J -r -c _$$ -hide-joliet _$$ -hide _$$ 
 
-
+# C FILES
 C_SOURCES = $(shell find src -type f -iname '*.c')
 C_OBJECTS = $(foreach x,$(basename $(C_SOURCES)),$(x).o)
 
+# ASM_FILES
 ASM_SOURCES = $(shell find src -type f -iname '*.asm')
 ASM_OBJECTS = $(foreach x,$(basename $(ASM_SOURCES)),$(x).o)
 
-all: cleanall runiso
+# Output files
+KERNEL_BIN = bin/kernel.bin
+ISO_FILE = barfi.iso
 
-MyOS.iso: kernel.bin 
-	$(MK) -o MyOS.iso -b isolinux/isolinux.bin $(MKF) ./bin
-	
+all : cleanall compile link makeiso runqemu
 
-kernel.bin: $(C_OBJECTS) $(ASM_OBJECTS)
-	$(LNK) $(LNKF) -Tlinker.ld -o bin/kernel.bin  $(C_OBJECTS) $(ASM_OBJECTS)
-	
+cleanall:
+	#Cleaning all genrated files
+	@rm -f $(C_OBJECTS) $(ASM_OBJECTS) $(KERNEL_BIN)
+
+compile: $(C_OBJECTS) $(ASM_OBJECTS)
+
 %.o:%.c
-	$(CC) $(CF) -o $@  $<
+	@$(CC) $(CF) $(DEBUG) -o $@  $<
 	
 %.o:%.asm
-	nasm -felf $< -o $@
-	
-cleanall:
-	rm -f $(C_OBJECTS) $(ASM_OBJECTS)  bin/kernel.bin
-	rm -f MyOS.iso
+	@nasm $(DEBUG) -felf $< -o $@
 
-cleanobj:
-	rm -f $(C_OBJECTS) $(ASM_OBJECTS)
-
-runkernel: kernel.bin
-	qemu-system-i386 -m 16 -kernel bin/kernel.bin
+link: $(C_OBJECTS) $(ASM_OBJECTS)
+	@$(LNK) $(LNKF) -Tlinker.ld -o $(KERNEL_BIN)  $(C_OBJECTS) $(ASM_OBJECTS)
 	
-runmonitor:MyOS.iso
-	qemu-system-i386 -m 20 -monitor stdio   --cdrom $<
-runiso: MyOS.iso
-	# use -S -gdb tcp::1234 for debug it will wait for connection
-	qemu-system-i386 -m 20   --cdrom $<
-	#bochs -f ./bochs/bochsrc
+makeiso: $(KERNEL_BIN)
+	$(MK) -o $(ISO_FILE) -b isolinux/isolinux.bin $(MKF) ./bin
+	
+runbochs: $(ISO_FILE)
+	@bochs -f ./bochs/bochsrc
+	
+runqemu: $(ISO_FILE)
+	@qemu-system-i386 --cdrom $<
+	

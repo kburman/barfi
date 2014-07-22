@@ -1,3 +1,13 @@
+/snap/whywhy/what the prblm wth strcmp
+/objdump.txt
+/map.txt
+/kernel_dev/kernel_dev.layout
+/kernel_dev/kernel_dev.cbp
+/kernel.elf
+/kernel.sym
+/kernel_dir.dump
+/src/project.depend
+/barfi.layout
 /src/project.layout
 /src/project.cbp
 /frames.dump
@@ -5,3 +15,5 @@
 *.bin
 *.*~
 *.o
+#files being edited
+*~

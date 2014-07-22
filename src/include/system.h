@@ -13,8 +13,7 @@
 #include <core/arch_x86/isr.h>
 #include <core/arch_x86/irq.h>
 #include <core/arch_x86/timer.h>
+#include <core/arch_x86/kmalloc.h>
 #include <datetime.h>
 #include <keyboard.h>
-#include <core/kmalloc.h>
-#include <core/paging.h>
 #endif

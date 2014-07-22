@@ -15,6 +15,8 @@
 
 // ticks every 0.01 sec by default
 volatile unsigned long ticks = 0;
+void (*func)();
+u8int handler_msec,count;
 
 void timer_phase(int hz)
 {
@@ -23,18 +25,32 @@ void timer_phase(int hz)
     outb(0x40, divisor & 0xFF);   /* Set low byte of divisor */
     outb(0x40, divisor >> 8);     /* Set high byte of divisor */
 }
-	
+
+void timereventhandler(void (*f)(),u8int msec)
+{
+    if(f) func = f;
+    handler_msec = msec;
+    count = 0;
+}
+
 
 void timer_handler(struct regs *r)
 {
     ticks++;
+    if(func!= 0 && count++ >= handler_msec)
+    {
+        func();
+        count = 0;
+    }
     //if(ticks%100 == 0) puts("one second\n");
 }
 
 void timer_install()
 {
+    func = 0;
     irq_install_handler(0, timer_handler);
-    timer_phase(100);
+    timer_phase(10);
+
 }
 
 void timer_wait(int xticks)

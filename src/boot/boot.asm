@@ -33,15 +33,18 @@ mboot:
 [EXTERN kernel_start]
 
 start:
+  mov esp, _sys_stack     ; This points the stack to our new stack area
   push    esp ;Stack location (GRUB doesn't tell us)
   push    ebx ;Multiboot header location
 
   ; Execute the kernel:
   cli
   call kernel_start
-  jmp $
+  hlt
 
-[GLOBAL test]
-test:
-	int 33
+
+SECTION .bss
+    resb 8192               ; This reserves 8KBytes of memory here
+_sys_stack:
+	
 

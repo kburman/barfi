@@ -6,7 +6,7 @@ void setxy(u8int new_x,u8int new_y);
 void clrscr();
 void scroll();
 void putchar(s8int ch);
-void puts(s8int *msg);
+void puts(u8int *msg);
 void putint(int no);
 void setcolor(u8int color);
 #endif
