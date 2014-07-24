@@ -8,7 +8,7 @@ Work Done:
   GDT,IDT,IRQ Setput
   Timer added
   Console
-  Keyboard [ issue: cursor is not displaying in right position]
+  Keyboard [ Some issue with cursor buts its funny to watch it dancing.]
   
 Future Work:
   Long list there is still a lot of work to be done so i am thinking about the future.
@@ -25,5 +25,5 @@ How to Build:
   cd /pathto_this_repo/
   make
   
-  and thats all it will by default build the kernel and iso image and then run it in Qemu
-  
+and thats all it will by default build the kernel and iso image and then run it in Qemu
+

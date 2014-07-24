@@ -18,6 +18,7 @@ void kernel_start(multiboot_header_t *mbd,u32int initial_stack)
 	__asm__ __volatile__ ("sti");
 	mbd_ptr = mbd;
 	stack_start = initial_stack;
+	//test_kmalloc()  ;
 	start_terminal();
 
 	for(;;);

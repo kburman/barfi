@@ -3,7 +3,7 @@ DEBUG =
 
 # COMPILER 
 CC  = gcc
-CF  = -Wall -g -O  -fstrength-reduce -fomit-frame-pointer 
+CF  = -Wall -O  -fstrength-reduce -fomit-frame-pointer 
 CF += -fno-stack-protector -finline-functions -nostdinc 
 CF += -fno-builtin  -m32  -I./src/include -c
 
@@ -26,12 +26,13 @@ ASM_OBJECTS = $(foreach x,$(basename $(ASM_SOURCES)),$(x).o)
 # Output files
 KERNEL_BIN = bin/kernel.bin
 ISO_FILE = barfi.iso
+KERNEL_OBJDUMP = kernel_objdump.txt
 
-all : cleanall compile link makeiso runqemu
+all : cleanall compile link  makeiso runqemu
 
 cleanall:
 	#Cleaning all genrated files
-	@rm -f $(C_OBJECTS) $(ASM_OBJECTS) $(KERNEL_BIN)
+	@rm -f $(C_OBJECTS) $(ASM_OBJECTS) $(KERNEL_BIN) $(KERNEL_OBJDUMP) map.txt
 
 compile: $(C_OBJECTS) $(ASM_OBJECTS)
 
@@ -42,7 +43,9 @@ compile: $(C_OBJECTS) $(ASM_OBJECTS)
 	@nasm $(DEBUG) -felf $< -o $@
 
 link: $(C_OBJECTS) $(ASM_OBJECTS)
-	@$(LNK) $(LNKF) -Tlinker.ld -o $(KERNEL_BIN)  $(C_OBJECTS) $(ASM_OBJECTS)
+	@$(LNK) $(DEBUG) $(LNKF) -Tlinker.ld -o $(KERNEL_BIN)  $(C_OBJECTS) $(ASM_OBJECTS)
+	@objdump -M intel -x -d -s -S -t -g -e $(KERNEL_BIN) > kernel_objdump.txt
+
 	
 makeiso: $(KERNEL_BIN)
 	$(MK) -o $(ISO_FILE) -b isolinux/isolinux.bin $(MKF) ./bin

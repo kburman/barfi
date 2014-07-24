@@ -1,25 +1,28 @@
 #include <system_apps/terminal/terminal.h>
 #include <core/arch_x86/typedef.h>
 #include <core/arch_x86/multiboot.h>
-#include <core/arch_x86/timer.h>
 #include <core/arch_x86/kmalloc.h>
+#include <core/arch_x86/common.h>
 #include <core/console.h>
 #include <keyboard.h>
 #include <datetime.h>
 #include <core/string.h>
-#define USERINPUT_LIMIT 30
+#define USERINPUT_LIMIT 30u
+#define DEFAULT_COLOR 0x98
+#define COMMOND_COLOR 0x9f
+#define DEFAULT_PROMT ">>"
+#define PRINT_HEADER 1
+#ifdef PRINT_HEADER
+    #define CMD_X 0
+    #define CMD_Y 1
+#else
+    #define CMD_X 0
+    #define CMD_Y 0
+#endif
 
 // forward declaration
-void keyhandler(u8int key);
-u8int* matchcmd(u8int* cmd,u8int* userinput);
-extern void timereventhandler(void (*f)(),u8int);
-void timer_event();
 extern multiboot_header_t *mbd_ptr;
-extern u32int stack_start; // stack grows downward
-extern u32int *end;
-extern u32int *code;
-extern u32int frame_count; // memory manged by kmalloc
-extern u32int blocks_allocated_kernel;
+extern u32int frame_count;
 // variable
 unsigned char keyboard[] =
 {
@@ -31,53 +34,78 @@ unsigned char keyboard[] =
     0, 0,
 };
 u8int indx;
-u8int buffer[USERINPUT_LIMIT];
+s8int buffer[USERINPUT_LIMIT];
 
-
+//  start the terminal application
+// anything on the screen will be
+// erased
 void start_terminal()
 {
-    setcolor(0x98);
-    memset(buffer,0,USERINPUT_LIMIT);
+    // set the console color to the default
+    setcolor(DEFAULT_COLOR);
+    // clear the buffer memory where we will
+    // store the text entered by the user
+    memset((u8int*)buffer,0u,USERINPUT_LIMIT);
+    // clear the screen with the deafult color
     clrscr();
+    // set the index which represent the number
+    // of charecter user typed
     indx = 0;
+    // hook keyboard for key event
     hookforkeystroke(keyhandler);
     //timereventhandler(timer_event,10);
+    // print ">> "
     printCommandLine();
 }
 
+// print the header and commond prompt [>>]
 void printCommandLine()
 {
-    printHeader();
-    setxy(0,1);
+    #ifdef PRINT_HEADER
+        printHeader();
+    #endif
+    // move the cursor to the x=0,y=1
+    setxy(CMD_X,CMD_Y);
+    // now print the prompt
     printprompt();
 }
 
+// clear any text tpyed by the user in command area
 void clearCommandLine()
 {
-    int i;
-    setxy(0,1);
-    setcolor(0x98);
+    u8int i;
+    setxy(CMD_X,CMD_Y);
+    setcolor(DEFAULT_COLOR);
+    // clear the command line by writing
+    // space there 80 times which will fill the
+    // whole line.
     for(i=0; i<80; i++) putchar(' ');
+    // reset the index
     indx = 0;
 }
 
+// put the promt in the screen
 void printprompt()
 {
-    setcolor(0x98);
-    puts(">> ");
+    setcolor(DEFAULT_COLOR);
+    puts(DEFAULT_PROMT);
     indx = 0;
 }
 
+// clear the area where result is shown
 void clearStage()
 {
 	int i;
-	setxy(0,2);
-	for(i=0;i<80*23;i++) putchar(' ');
+    // just move to next line after the cmd prompt
+	setxy(CMD_X,CMD_Y+1);
+	for(i=0;i<80*(24-CMD_Y);i++) putchar(' ');
 }
 
+// this will process the key event for us
+// and decode if to print it on screen or not
 void keyhandler(u8int key)
 {
-    setcolor(0x9f);
+    setcolor(COMMOND_COLOR);
     if(indx >= 0 && indx < USERINPUT_LIMIT)
     {
         if(keyboard[key] == '\b')
@@ -98,6 +126,8 @@ void keyhandler(u8int key)
         }
         else if(indx < USERINPUT_LIMIT-1) // one minus because we have to add null char and so that bckspace can wrk
         {
+            // here we can add additional check up to
+            // ensure that if char is what we expected
             putchar(keyboard[key]);
             buffer[indx] = keyboard[key];
             indx++;
@@ -105,11 +135,13 @@ void keyhandler(u8int key)
     }
 }
 
+// parse the command typed by the user
+// and produce outpu for it
 void processCommand()
 {
-	u8int *ptr;
-    setxy(0,2);
-    setcolor(0x9f);
+	s8int *ptr;
+    setxy(CMD_X,CMD_Y+1);
+    setcolor(DEFAULT_COLOR);
 
     if((ptr = matchcmd("echo",buffer)) != 0)
     {
@@ -119,16 +151,15 @@ void processCommand()
     {
     	datetime_t now;
     	now = getDatetime();
-    	memset(buffer,0,USERINPUT_LIMIT);
+    	memset((u8int*)buffer,0u,USERINPUT_LIMIT);
     	parsedatetime(&now,buffer);
     	puts(buffer);
     }
     else if((ptr = matchcmd("test",buffer)) != 0)
     {
-    	char *ptr = "hello";
-    	char ptr2[10] = "world";
-    	strcat(ptr,ptr2);
-    	puts(ptr2);
+    	memset((u8int*)buffer,0u,USERINPUT_LIMIT);
+        itoa(buffer,'x',15);
+        puts(buffer);
     }
     else if((ptr = matchcmd("reboot",buffer)) != 0)
     {
@@ -137,18 +168,16 @@ void processCommand()
     else if((ptr = matchcmd("mem",buffer)) != 0)
     {
 		setcolor(0x9f);
-		puts("Memory manged : ");setcolor(0x9e);putint(frame_count*8*4);puts(" KB\n");
+		puts("Memory manged : ");setcolor(0x9e);putint(frame_count*4);puts(" KB\n");
 
 		setcolor(0x9f);
-		u32int memu = memUsage()*4;
+		u32int memu = getMemoryConsumed_kb();
 		puts("Total Memory Used : ");setcolor(0x9e);putint(memu);puts(" KB\n");
 
 		setcolor(0x9f);
 		memu -= 0x00100000/1024;
 		puts("Total Memory Used(after grub) : ");setcolor(0x9e);putint(memu);puts(" KB\n");
 
-		setcolor(0x9f);
-		puts("Memory Used by kernel: ");setcolor(0x9e);putint(blocks_allocated_kernel*4 - 0x00100000/1024);puts(" KB\n");
     }
     else if((ptr = matchcmd("boot",buffer)) != 0)
     {
@@ -161,7 +190,7 @@ void processCommand()
     }
     else if((ptr = matchcmd("help",buffer)) != 0)
     {
-    	setcolor(0x9f);
+    	setcolor(DEFAULT_COLOR);
     	puts("help - this page\n");
     	puts("echo - print any thing you write\n");
     	puts("now  - print the date and time\n");
@@ -171,7 +200,7 @@ void processCommand()
     else
     {
     	setcolor(0x94);puts(buffer);
-    	setcolor(0x9a);puts(" is not any recognied command.\nTry typing ");
+    	setcolor(DEFAULT_COLOR);puts(" is not any recognied command.\nTry typing ");
     	setcolor(0x9a);puts("help");
     }
 }
@@ -179,7 +208,7 @@ void processCommand()
 
 // return 0 if not matched
 // or return pointer to next arg
-u8int* matchcmd(u8int* cmd,u8int* userinput)
+s8int* matchcmd(s8int* cmd,s8int* userinput)
 {
 	while (*cmd == *userinput)
 	{
@@ -193,20 +222,28 @@ u8int* matchcmd(u8int* cmd,u8int* userinput)
 		return 0;
 }
 
-void timer_event()
-{
-    printHeader();
-}
-
+// print the header
 void printHeader()
 {
-    int i,tmpx,tmpy;
-    getxy(&tmpx,&tmpy);
-    setxy(0,0);
-    setcolor(0x87);
-    for(i=0; i<37; i++) putchar(' ');
-    puts("barfi");
-    for(i=0; i<38; i++) putchar(' ');
-    setxy(tmpx,tmpy);
-    setcolor(0x98);
+    // as preventave measure to  not print
+    // header if any one call it.
+    #ifdef PRINT_HEADER
+        int i,tmpx,tmpy;
+        getxy(&tmpx,&tmpy);
+        setxy(0,0);
+        setcolor(0x87);
+        for(i=0; i<37; i++) putchar(' ');
+        puts("barfi");
+        for(i=0; i<38; i++) putchar(' ');
+        setxy(tmpx,tmpy);
+        setcolor(DEFAULT_COLOR);
+    #else
+        // this is really important it may be the case
+        // if we forgot about #ifdef and called printHeader
+        // and found nothing is being printed
+        clrscr();
+        puts("You have called printHeader() but ");
+        puts("it PRINTI_HEADER is to 0.");
+        for(;;);
+    #endif
 }

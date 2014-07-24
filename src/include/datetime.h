@@ -10,4 +10,7 @@ typedef struct{
    unsigned char year;
 }datetime_t;
 
+//Gets CMOS actual time
+datetime_t getDatetime();
+
 #endif

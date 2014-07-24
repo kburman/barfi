@@ -10,6 +10,8 @@ u8int x = 0,y = 0; // x,y position in the screen
 u8int attrib = 0x9f; // foreground & background
 u16int *txtmem = (u16int*)0xb8000;
 
+// return the current x,y position if the cursor
+// on the monitor
 void getxy(u8int *x1,u8int *y1)
 {
 	*x1 = x;
@@ -22,7 +24,6 @@ void update_cursor()
 	if(!graphical_mode)
 	{
 		u8int temp = y*80 + x;
-		temp /= 2;
 		outb(0x3D4, 14);
 		outb(0x3D5, temp >> 8);
     	outb(0x3D4, 15);
@@ -30,12 +31,17 @@ void update_cursor()
 	}
 }
 
+// Set the foreground,background color of charecter
+// printed after this function is called. It will
+// not effect previous char
 void setcolor(u8int color)
 {
 	attrib = color;
 }
 
-// set the pointer
+// Set the x,y position of the cursor in the monitor
+// which will effect the where the next character will
+// be printed after this function is called
 void setxy(u8int new_x,u8int new_y)
 {
 	x = new_x;
@@ -43,7 +49,8 @@ void setxy(u8int new_x,u8int new_y)
 	update_cursor();
 }
 
-
+// Clear everything in the screen by overwritting ' ' Space 
+// all over the screen
 void clrscr()
 {
 	if(!graphical_mode)
@@ -60,7 +67,7 @@ void clrscr()
 	update_cursor();
 }
 
-// scroll the screen one line above
+// This move every line above and clear the last line
 void scroll()
 {
 	if(!graphical_mode)
@@ -135,8 +142,8 @@ void putchar(s8int ch)
 
 
 
-// Print a String
-void puts(u8int *msg)
+// Print a null trminated char array on the screen
+void puts(s8int *msg)
 {
 
 	while(*msg != '\0')
@@ -144,12 +151,25 @@ void puts(u8int *msg)
 	update_cursor();
 }
 
+// Convert a Integer into Char array and ptint it to 
+// screen
 void putint(int no)
 {
 	char txt[10] = "";
-	itoa(txt,10,no);
+	itoa(txt,'d',no);
 	puts(txt);
 	update_cursor();
 }
+
+// Print the Integer into Hex format
+void putint_hex(int no)
+{
+	char txt[10] = "";
+	itoa(txt,'x',no);
+	puts("0x");
+	puts(txt);
+	update_cursor();
+}
+
 
 

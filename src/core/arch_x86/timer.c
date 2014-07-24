@@ -1,24 +1,23 @@
 #include <core/arch_x86/typedef.h>
-#include <core/arch_x86/cpu.h>
 #include <core/arch_x86/common.h>
 #include <core/arch_x86/regs.h>
 #include <core/arch_x86/irq.h>
-#include <core/string.h>
-#include <core/console.h>
-#include <datetime.h>
 
-#define BCD2BIN(bcd) ((((bcd)&15) + ((bcd)>>4)*10))
-#define MINUTE 60
-#define HOUR (60*MINUTE)
-#define DAY (24*HOUR)
-#define YEAR (365*DAY)
 
-// ticks every 0.01 sec by default
-volatile unsigned long ticks = 0;
-void (*func)();
-u8int handler_msec,count;
+// ticks 1000 times per second then 
+// it will overflow in
+// 584942417.355072032 year
+volatile unsigned long timer_ticks = 0;
+// function pointer to external program
+// which will called to do any task which
+// they want
+void (*handler_func)();
+// count the milli sec pass for handler function
+u8int handler_counter;
+// contain the requested milli second 
+u8int handler_msec_passed;
 
-void timer_phase(int hz)
+void timer_phase(u32int hz)
 {
     int divisor = 1193180 / hz;       /* Calculate our divisor */
     outb(0x43, 0x36);             /* Set our command byte 0x36 */
@@ -26,57 +25,51 @@ void timer_phase(int hz)
     outb(0x40, divisor >> 8);     /* Set high byte of divisor */
 }
 
-void timereventhandler(void (*f)(),u8int msec)
+// register for timer event at [msec] milli second
+void register_tiemr_event(void (*func)(),u8int msec)
 {
-    if(f) func = f;
-    handler_msec = msec;
-    count = 0;
+    // if the f !=0 then move further
+    if (func != 0)
+    {
+      handler_func = func;
+      handler_counter = msec;
+      handler_msec_passed = 0;
+    }
 }
 
-
+// it will be called when an timer irq
+// is raised 
 void timer_handler(struct regs *r)
 {
-    ticks++;
-    if(func!= 0 && count++ >= handler_msec)
+    timer_ticks++;
+    if (handler_func != 0 && (handler_msec_passed++ >= handler_counter))  
     {
-        func();
-        count = 0;
+        handler_func();
     }
-    //if(ticks%100 == 0) puts("one second\n");
+
+    //if(ticks%1000 == 0) puts("one second\n");
 }
 
+// start timer
 void timer_install()
 {
-    func = 0;
+    handler_func = 0;
+    handler_msec_passed = 0;
+    handler_counter = 0;
     irq_install_handler(0, timer_handler);
-    timer_phase(10);
+    timer_phase(1000); // set to ticks 1000times per second
 
 }
 
+// wait for xticks
 void timer_wait(int xticks)
 {
     unsigned long eticks;
-    char name[2];
-    eticks = ticks + xticks;
-    for(;eticks>ticks;);
+    eticks = timer_ticks + xticks;
+    for(;eticks>timer_ticks;);
 }
 
-//Gets CMOS actual time
-datetime_t getDatetime()
-{
-   datetime_t now;
 
-    __asm__ __volatile__ ("cli");
-   now.sec = BCD2BIN(readCMOS(0x0));
-   now.min = BCD2BIN(readCMOS(0x2));
-   now.hour = BCD2BIN(readCMOS(0x4));
-   now.day = BCD2BIN(readCMOS(0x7));
-   now.month = BCD2BIN(readCMOS(0x8));
-   now.year = BCD2BIN(readCMOS(0x9));
-   __asm__ __volatile__ ("sti");
-
-   return now;
-}
 
 
 
